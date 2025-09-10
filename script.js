@@ -30,70 +30,71 @@ const questions = [
   },
 ];
 
-// Display the quiz questions and choices
-const questionsElement = document.getElementById("questions");
-        const submitButton = document.getElementById("submit");
-        const scoreElement = document.getElementById("score");
+const questionsDiv = document.getElementById("questions");
 
-        // Load saved answers from sessionStorage (progress)
-        let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || {};
+    // Load saved answers
+    let savedAnswers = JSON.parse(localStorage.getItem("answers") || "{}");
 
-        // Render questions
-        function renderQuestions() {
-            questionsElement.innerHTML = ""; // clear on refresh
-            questions.forEach((q, i) => {
-                const questionDiv = document.createElement("div");
-                questionDiv.innerHTML = `<p>${q.question}</p>`;
+    // Render quiz
+    questions.forEach((q, qIndex) => {
+      const div = document.createElement("div");
+      const label = document.createElement("h3");
+      label.textContent = q.q;
+      div.appendChild(label);
 
-                q.choices.forEach((choice) => {
-                    const choiceElement = document.createElement("input");
-                    choiceElement.type = "radio";
-                    choiceElement.name = `question-${i}`;
-                    choiceElement.value = choice;
+      q.options.forEach((option) => {
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "question" + qIndex;
+        input.value = option;
 
-                    // keep checked state if saved
-                    if (userAnswers[i] === choice) {
-                        choiceElement.checked = true;
-                    }
-
-                    // Save to sessionStorage on change
-                    choiceElement.addEventListener("change", () => {
-                        userAnswers[i] = choice;
-                        sessionStorage.setItem("progress", JSON.stringify(userAnswers));
-                    });
-
-                    const label = document.createElement("label");
-                    label.textContent = choice;
-
-                    questionDiv.appendChild(choiceElement);
-                    questionDiv.appendChild(label);
-                    questionDiv.appendChild(document.createElement("br"));
-                });
-
-                questionsElement.appendChild(questionDiv);
-            });
+        // Restore saved state
+        if (savedAnswers[qIndex] === option) {
+          input.checked = true;
+          input.setAttribute("checked", "true"); // Cypress needs this
         }
 
-        // Submit quiz
-        submitButton.addEventListener("click", () => {
-            let score = 0;
+        // On click save to localStorage
+        input.addEventListener("click", () => {
+          savedAnswers[qIndex] = option;
+          localStorage.setItem("answers", JSON.stringify(savedAnswers));
 
-            questions.forEach((q, i) => {
-                if (userAnswers[i] === q.answer) {
-                    score++;
-                }
-            });
+          // Reset all in this group first
+          document.querySelectorAll(`input[name="question${qIndex}"]`).forEach(r => {
+            r.removeAttribute("checked");
+          });
 
-            scoreElement.textContent = `Your score is ${score} out of ${questions.length}.`;
-
-            // Save score in localStorage
-            localStorage.setItem("score", score);
+          input.setAttribute("checked", "true"); // set attr on selected
         });
 
-        // Show last saved score (if any)
-        const savedScore = localStorage.getItem("score");
-        if (savedScore !== null) {
-            scoreElement.textContent = `Your score is ${savedScore} out of ${questions.length}.`;
-        }
+        const span = document.createElement("span");
+        span.textContent = option;
 
-        renderQuestions();
+        div.appendChild(input);
+        div.appendChild(span);
+        div.appendChild(document.createElement("br"));
+      });
+
+      questionsDiv.appendChild(div);
+    });
+
+    // Submit button
+    document.getElementById("submit").addEventListener("click", () => {
+      let score = 0;
+      questions.forEach((q, i) => {
+        if (savedAnswers[i] === q.answer) {
+          score++;
+        }
+      });
+      const result = `Your score is ${score} out of ${questions.length}.`;
+      document.getElementById("score").textContent = result;
+
+      // Save score to localStorage
+      localStorage.setItem("score", score);
+    });
+
+    // If score already in storage, show it
+    if (localStorage.getItem("score")) {
+      document.getElementById("score").textContent =
+        `Your score is ${localStorage.getItem("score")} out of ${questions.length}.`;
+    }
