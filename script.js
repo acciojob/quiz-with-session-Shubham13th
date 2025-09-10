@@ -1,40 +1,66 @@
 const questions = [
-      { question: "2 + 2 = ?", choices: ["3", "4", "5"], answer: "4" },
-      { question: "Capital of India?", choices: ["Delhi", "Mumbai", "Kolkata"], answer: "Delhi" },
-      { question: "5 * 3 = ?", choices: ["15", "10", "8"], answer: "15" },
-      { question: "Sun rises in?", choices: ["East", "West", "North"], answer: "East" },
-      { question: "Water formula?", choices: ["H2O", "CO2", "O2"], answer: "H2O" }
+      {
+        question: "What is the capital of France?",
+        choices: ["Paris", "London", "Berlin", "Madrid"],
+        answer: "Paris",
+      },
+      {
+        question: "What is the highest mountain in the world?",
+        choices: ["Everest", "Kilimanjaro", "Denali", "Matterhorn"],
+        answer: "Everest",
+      },
+      {
+        question: "What is the largest country by area?",
+        choices: ["Russia", "China", "Canada", "United States"],
+        answer: "Russia",
+      },
+      {
+        question: "Which is the largest planet in our solar system?",
+        choices: ["Earth", "Jupiter", "Mars", "Saturn"],
+        answer: "Jupiter",
+      },
+      {
+        question: "What is the capital of Canada?",
+        choices: ["Toronto", "Montreal", "Vancouver", "Ottawa"],
+        answer: "Ottawa",
+      },
     ];
 
     const questionsDiv = document.getElementById("questions");
+
+    // Load saved answers
     let savedAnswers = JSON.parse(localStorage.getItem("answers") || "{}");
 
     // Render quiz
     questions.forEach((q, qIndex) => {
       const div = document.createElement("div");
+
       const label = document.createElement("h3");
-      label.textContent = q.question;
+      label.textContent = q.question; // ✅ FIXED
       div.appendChild(label);
 
-      q.choices.forEach((choice) => {
+      q.choices.forEach((choice) => { // ✅ FIXED
         const input = document.createElement("input");
         input.type = "radio";
         input.name = "question" + qIndex;
         input.value = choice;
 
-        // Restore saved answers
+        // Restore saved state
         if (savedAnswers[qIndex] === choice) {
           input.checked = true;
-          input.setAttribute("checked", "true");
+          input.setAttribute("checked", "true"); // Cypress sees it
         }
 
+        // On click save to localStorage
         input.addEventListener("click", () => {
           savedAnswers[qIndex] = choice;
           localStorage.setItem("answers", JSON.stringify(savedAnswers));
-          // Reset all in group
-          document.querySelectorAll(`input[name="question${qIndex}"]`).forEach(r => {
-            r.removeAttribute("checked");
-          });
+
+          // Reset all radios in this group
+          document
+            .querySelectorAll(`input[name="question${qIndex}"]`)
+            .forEach(r => r.removeAttribute("checked"));
+
           input.setAttribute("checked", "true");
         });
 
@@ -59,10 +85,12 @@ const questions = [
       });
       const result = `Your score is ${score} out of ${questions.length}.`;
       document.getElementById("score").textContent = result;
+
+      // Save score to localStorage
       localStorage.setItem("score", score);
     });
 
-    // If already scored, show score
+    // If score already in storage, show it
     if (localStorage.getItem("score")) {
       document.getElementById("score").textContent =
         `Your score is ${localStorage.getItem("score")} out of ${questions.length}.`;
